@@ -1,0 +1,39 @@
+{
+  "expo": {
+    "name": "منطق اللوز",
+    "slug": "mantic-alloz",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "icon": "./assets/icon.png",
+    "userInterfaceStyle": "light",
+    "splash": {
+      "image": "./assets/splash-00.png",
+      "resizeMode": "contain",
+      "backgroundColor": "#c2e7ff"
+    },
+    "updates": {
+      "fallbackToCacheTimeout": 0
+    },
+    "assetBundlePatterns": [
+      "**/*"
+    ],
+    "ios": {
+      "supportsTablet": true
+    },
+    "android": {
+      "versionCode": 1,
+      "adaptiveIcon": {
+        "foregroundImage": "./assets/adaptive-icon.png",
+        "backgroundColor": "#c2e7ff"
+      }
+    },
+    "web": {
+      "favicon": "./assets/favicon.png"
+    },
+    "extra": {
+      "eas": {
+        "projectId": "05462e58-a445-4ef6-8771-3802b30b4e3f"
+      }
+    }
+  }
+}
