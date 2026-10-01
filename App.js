@@ -3,6 +3,7 @@ import { NavigationContainer } from '@react-navigation/native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import Game from './screens/Game';
 import Home from './screens/Home'
+import RowBuilder from './components/RowBuilder';
 
 
 const Stack = createNativeStackNavigator();

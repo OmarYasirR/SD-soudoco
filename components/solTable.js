@@ -11,7 +11,7 @@ import {
 const solTable = ({ tableHead, tableData, tableTitle }) => {
   return (
     <View style={styles.container}>
-      <Table borderStyle={{ borderWidth: 1.4, borderColor: '#00675b' }}>
+      <Table borderStyle={{ borderWidth: 1.4, borderColor: '#00675b',borderRadius: 3  }}>
         <Row
           data={tableHead}
           flexArr={[1, 1, 1, 1]}
@@ -44,7 +44,7 @@ const styles = StyleSheet.create({
     marginTop: 15,
     paddingHorizontal: 5,
   },
-  head: { height: 30, backgroundColor: "#c2e7ff" },
+  head: { height: 38, backgroundColor: "#c2e7ff"},
   wrapper: { flexDirection: "row" },
   title: { flex: 1, backgroundColor: "#c2e7ff", width: 100 },
   row: { height: 38 },

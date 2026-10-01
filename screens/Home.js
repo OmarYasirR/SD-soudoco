@@ -1,10 +1,8 @@
-import { StatusBar, StyleSheet, Text, TouchableOpacity, View } from 'react-native'
+import { StatusBar, StyleSheet, TouchableOpacity, View } from 'react-native'
 import React, { useEffect, useState } from 'react'
 import { Entypo } from '@expo/vector-icons';
 import { Ionicons } from '@expo/vector-icons';
-import AsyncStorage from '@react-native-async-storage/async-storage';
 import { Audio } from 'expo-av';
-
 
 const Home = ({navigation}) => {
 
@@ -36,6 +34,14 @@ const Home = ({navigation}) => {
       playSound()
     }
   }, []);
+  useEffect(() => {
+    return () => {
+      if (sound) {
+        sound.unloadAsync()
+      }
+    }
+  }, [sound]);
+
 
   return (
     <View style={styles.container}>
@@ -51,13 +57,12 @@ const Home = ({navigation}) => {
           (<Entypo name="sound" size={74} color="#00675b" />)
         }
       </TouchableOpacity>
-      <TouchableOpacity onPress={() => {navigation.navigate('Game'),AsyncStorage.removeItem('row3Cels')}}>
+      <TouchableOpacity onPress={() => {navigation.navigate('Game')}}>
         <Ionicons name="md-game-controller" size={74} color="#00675b" />
       </TouchableOpacity>
       </View>
   )
 }
-{/* <Entypo name="sound-mute" size={24} color="black" /> */}
 
 export default Home
 

@@ -8,7 +8,7 @@
     "userInterfaceStyle": "light",
     "splash": {
       "image": "./assets/splash-00.png",
-      "resizeMode": "contain",
+      "resizeMode": "cover",
       "backgroundColor": "#c2e7ff"
     },
     "updates": {
@@ -21,11 +21,12 @@
       "supportsTablet": true
     },
     "android": {
-      "versionCode": 1,
+      "versionCode": 3,
       "adaptiveIcon": {
         "foregroundImage": "./assets/adaptive-icon.png",
         "backgroundColor": "#c2e7ff"
-      }
+      },
+      "package": "com.omaryasir.manticalloz"
     },
     "web": {
       "favicon": "./assets/favicon.png"

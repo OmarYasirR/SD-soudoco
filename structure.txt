@@ -1,0 +1,33 @@
+D:\Projects\Mobile App\soudoco
+├── App.js
+├── app.json
+├── assets
+|  ├── adaptive-icon.png
+|  ├── favicon.png
+|  ├── icon.png
+|  ├── Sounds
+|  |  ├── delete.mp3
+|  |  ├── goodresult.mp3
+|  |  ├── main.mp3
+|  |  ├── ping-82822.mp3
+|  |  ├── wood-spin.mp3
+|  |  └── wrong-buzzer.mp3
+|  └── splash-00.png
+├── babel.config.js
+├── components
+|  ├── Modle.js
+|  ├── RowBuilder.js
+|  ├── solTable.js
+|  └── TheHeader.js
+├── db
+|  └── data.json
+├── eas.json
+├── package-lock.json
+├── package.json
+└── screens
+   ├── Game.js
+   └── Home.js
+
+directory: 6045 file: 35733
+
+ignored: directory (500)

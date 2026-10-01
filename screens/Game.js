@@ -1,5 +1,5 @@
 import { StatusBar } from "expo-status-bar";
-import { useEffect, useState } from "react";
+import { useEffect, useState,useReducer } from "react";
 import {
   StyleSheet,
   Text,
@@ -9,40 +9,121 @@ import {
 } from "react-native";
 import { Entypo } from "@expo/vector-icons";
 import { AntDesign } from "@expo/vector-icons";
-import { Table, TableWrapper, Cell, Rows } from "react-native-table-component";
 import SolTable from "../components/solTable";
 import Data from "../db/data.json";
 import Modle from "../components/Modle";
-import AsyncStorage from '@react-native-async-storage/async-storage';
-import { Audio } from 'expo-av';
-
+import AsyncStorage from "@react-native-async-storage/async-storage";
+import { Audio } from "expo-av";
+import RowBuilder from "../components/RowBuilder";
+import TheHeader from "../components/TheHeader";
 
 export default function Game() {
-  const [active, setActive] = useState(0)
-  const [crntQustion, setCrntQustion] = useState(Data[active])
+  const [slectSond, setSlectSond] = useState();
+  const [clickSond, setClickSond] = useState();
+  const [deletSond, setDeletSond] = useState();
+  
+  const [newBox, setnewBox] = useState([
+    ["", "", ""],
+    ["", "", ""],
+    ["", "", ""],
+    ["", "", ""],
+  ]);
   const [modle, setModle] = useState(false);
-  const [win, setWine] = useState(false);
+  const [win, setWin] = useState(false);
 
-  // Sounds
-  const [slect, setSlect] = useState()
-  const [click, setClick] = useState()
   async function settingslct() {
-    const { sound } = await Audio.Sound.createAsync(require('../assets/Sounds/wood-spin.mp3'));
-    setSlect(sound);
-    await sound.playAsync()
-    setSlect(sound)
+    const { sound } = await Audio.Sound.createAsync(
+      require("../assets/Sounds/wood-spin.mp3")
+    );
+    setSlectSond(sound);
+    await sound.playAsync();
+  }
+  async function settingDelet() {
+    const { sound } = await Audio.Sound.createAsync(
+      require("../assets/Sounds/delete.mp3")
+    );
+    setDeletSond(sound);
+    await sound.playAsync();
+    setDeletSond(sound);
   }
   async function settingclk() {
-    const { sound } = await Audio.Sound.createAsync(require('../assets/Sounds/ping-82822.mp3'));
-    setClick(sound);
-    await sound.playAsync()
-    setClick(sound)
+    const { sound } = await Audio.Sound.createAsync(
+      require("../assets/Sounds/ping-82822.mp3")
+    );
+    setClickSond(sound);
+    await sound.playAsync();
+    setClickSond(sound);
   }
 
-
-  const El = ({ i1, i2, i3, val, arToSet }) => (
-    <View>{cellValSeter(val, arToSet, i1, i2, i3)}</View>
-  );
+  const El = ({ i0, i1, i2, i3, val }) => {
+    if (val == "emty") {
+      return (
+        <View style={{ flex: 1 }}>
+          <Text
+            style={{
+              flex: 1,
+              justifyContent: "center",
+              alignItems: "center",
+              width: 13,
+            }}
+            onPress={() =>
+              dispatch({
+                type: "editting",
+                payload: { i0: i0, i1: i1, i2: i2, i3: i3 },
+              })
+            }
+          ></Text>
+        </View>
+      );
+    }
+    if (val === "hint") {
+      return (
+        <View
+          style={{
+            flex: 1,
+            backgroundColor: "#777",
+            justifyContent: "center",
+            alignItems: "center",
+            margin: 1,
+            alignContent: "center",
+          }}
+        >
+          <Entypo name="cross" size={15} color="white" />
+        </View>
+      );
+    }
+    if (val) {
+      return (
+        <Entypo
+          name="check"
+          size={18}
+          color="#00675b"
+          onPress={() =>
+            dispatch({
+              type: "editting",
+              payload: { i0: i0, i1: i1, i2: i2, i3: i3 },
+            })
+          }
+          style={{ alignSelf: "center" }}
+        />
+      );
+    } else {
+      return (
+        <Entypo
+          name="cross"
+          size={18}
+          color="#00675b"
+          onPress={() =>
+            dispatch({
+              type: "editting",
+              payload: { i0: i0, i1: i1, i2: i2, i3: i3 },
+            })
+          }
+          style={{ alignSelf: "center" }}
+        />
+      );
+    }
+  };
 
   const crosCount = (array) => {
     let num = 0;
@@ -51,60 +132,76 @@ export default function Game() {
     });
     return num;
   };
-
-  const editHandler = (arToset, Arr, i1, i2, i3) => {
-    const crntArr = Arr[i1][i2].cells;
-    const ischecked = Arr[i1][i2].checked;
-
-    if (curntstate === "delete") {
+  const indexswiper = (num) => {
+    let ind;
+    num == 0
+      ? (ind = 3)
+      : num == 1
+      ? (ind = 2)
+      : num == 2
+      ? (ind = 1)
+      : (ind = 0);
+    return ind;
+  };
+  const editHandler = (Arr, i0, i1, i2, i3, state, active) => {
+    const crntArr = Arr[i0][i1][i2].cells;
+    const ischecked = Arr[i0][i1][i2].checked;
+    if (state === "delete") {
+      if (crntArr[i3] !== 'emty') {
+        settingDelet()
+      }
       if (crntArr[i3] === true) {
-        Arr[i1][i2].checked = false;
-        Filler(false, arToset, i2, i3)
+        Arr[i0][i1][i2].checked = false;
+        if (i1 == 0) {
+          setnewBox((prev) => {
+            prev[indexswiper(i3)][i0] = "";
+            return prev;
+          });
+        }
       }
       crntArr[i3] = "emty";
     }
-    if (curntstate === true) {
+    if (state === true) {
       if (!ischecked) {
-        settingclk()
-        Arr[i1].map((item) => {
+        settingclk();
+        Arr[i0][i1].map((item) => {
           item.cells[i3] !== "hint" ? (item.cells[i3] = false) : undefined;
         });
         crntArr.map((cell, i) => {
-          cell != "hint" ? (Arr[i1][i2].cells[i] = false) : undefined;
+          cell != "hint" ? (Arr[i0][i1][i2].cells[i] = false) : undefined;
         });
-        Arr[i1][i2].checked = true;
+        Arr[i0][i1][i2].checked = true;
         crntArr[i3] = true;
-        if(i1 == 0){
-          Filler(true, arToset, i2, i3)
+        if (i1 == 0) {
+          // dispatch({
+          //   type: "setSolBox",
+          //   payload: { opr: true, i0: i0, i2: i2, i3: i3 },
+          // });
         }
       }
     }
-    if (curntstate === false) {
+    if (state === false) {
       if (!ischecked) {
-        settingclk()
+        settingclk();
         if (crosCount(crntArr) == 3) {
-          Arr[i1].map((item) => {
+          Arr[i0][i1].map((item) => {
             item.cells[i3] !== "hint" ? (item.cells[i3] = false) : undefined;
           });
           crntArr[i3] = true;
-          if(i1 == 0){
-            Filler(true, arToset, i2, i3)
+          if (i1 == 0) {
           }
-          Arr[i1][i2].checked = true;
+          Arr[i0][i1][i2].checked = true;
         }
         if (crosCount(crntArr) == 2) {
           crntArr[i3] = false;
           crntArr.map((item, i) => {
             if (item === "emty") {
-              Arr[i1][i2].checked = true;
+              Arr[i0][i1][i2].checked = true;
               // Fill All Column Cells With Cross Sign
-              Arr[i1].map((item) => {
+              Arr[i0][i1].map((item) => {
                 item.cells[i] !== "hint" ? (item.cells[i] = false) : undefined;
               });
               crntArr[i] = true;
-              if(i1 == 0){
-                Filler(true, arToset, i2, i)
-              }
               crntArr[i3] = false;
             }
           });
@@ -114,486 +211,240 @@ export default function Game() {
         }
       }
     }
-    
-    Arr[i1].map((item, i) => {
-      if(!(item.cells.includes(true))){
+
+    Arr[i0][i1].map((item, i) => {
+      if (!item.cells.includes(true)) {
         item.checked = false;
       }
     });
-    AsyncStorage.setItem(`row${arToset}`, JSON.stringify(Arr))
+    Filler(Arr[i0][i1], i0, i1, active);
+    AsyncStorage.setItem("rows", JSON.stringify(Arr));
     return Arr;
   };
-  
-  const clickHandler = (arToset, i1, i2, i3) => {
-    
-    if (arToset === 1) {
-      editHandler(arToset, row1, i1, i2, i3)
-      setRow1((prev) => {
-        AsyncStorage.getItem('row1').then((res) => {
-          prev = JSON.parse(res);
-        })
-        return prev;
-      });
-    }
-    if (arToset === 2) {
-      editHandler(arToset, row2, i1, i2, i3)
-      setRow2((prev) => {
-        AsyncStorage.getItem('row2').then((res) => {
-          prev = JSON.parse(res)
-        })
-        return prev;
-      });
-    }
-    if (arToset === 3) {
-      editHandler(arToset, row3, i1, i2, i3)
-      setRow3((prev) => {
-        AsyncStorage.getItem('row3').then((res) => {
-          prev = JSON.parse(res)
-        })
-        return prev;
-      });
-    }
-    setRow1Cels((prev) => {
-      prev = cellGenerator(row1, 1);
-      return prev;
-    });
-    setRow2Cels((prev) => {
-      prev = cellGenerator(row2, 2);
-      return prev;
-    });
-    setRow3Cels((prev) => {
-      prev = cellGenerator(row3, 3);
-      return prev;
-    });
-  };
-  const [curntstate, setCurntstate] = useState(true);
 
-  const Filler = (oprtor, num, i2, i3) => {
-    let names;
-    num == 1 ? (names = nam1) : num == 2 ? (names = nam2) : (names = nam3);
-    setSolbox((prev) => {
-      prev[i3][num - 1] = oprtor ? names[i2] : "";
-      AsyncStorage.setItem('box', JSON.stringify(prev))
-      return prev;
-    });
-      
-    
-    
+
+  const Filler = (Arr, i0, i1, active) => {
+    let allNames = Data[active].names;
+    let names = [];
+    i0 == 0
+      ? (names = allNames.nam1)
+      : i0 == 1
+      ? (names = allNames.nam2)
+      : (names = allNames.nam3);
+    if (i1 == 0) {
+      Arr.map((row, i) => {
+        if (row.cells.includes(true)) {
+          let truIndx = row.cells.indexOf(true);
+          setnewBox((prev) => {
+            prev[indexswiper(truIndx)][i0] = names[i];
+            AsyncStorage.setItem("solBox", JSON.stringify(prev));
+            return prev;
+          });
+        }
+      });
+    }
   };
 
   const submtHandler = () => {
-    setModle(true)
-    const rows = [row1,row2,row3];
+    setModle(true);
+    const rows = state.Row;
     let ansrArr = [];
     rows.map((row, i1) => {
       row.map((block, i2) => {
         block.map((cels, i3) => {
-          cels.cells[crntQustion.answers[i1][i2][i3]] === true
+          cels.cells[Data[state.active].answers[i1][i2][i3]] === true
             ? ansrArr.push(true)
             : ansrArr.push(false);
         });
       });
     });
-    setWine(ansrArr.every(ele => ele === true))    
-    // 
+    setWin(ansrArr.every(ele => ele === true));
   };
 
   // Perssisting Data
-  const Perssesting =() => {
-    AsyncStorage.getItem('active').then((res) => {
+  const Perssesting = () => {
+    AsyncStorage.getItem("active").then((res) => {
       if (res !== null) {
-        setActive(JSON.parse(res))
+        dispatch({type: 'persestActive', payload: JSON.parse(res)})
       }
-    })
-    AsyncStorage.getItem('box').then((res) => {
+    });
+    AsyncStorage.getItem("rows").then((res) => {
       if (res !== null) {
-        setSolbox((prev) => {
+        dispatch({type: 'persestRows', payload: JSON.parse(res)})
+      }
+    }); 
+    AsyncStorage.getItem("solBox").then((res) => {
+      if (res !== null) {
+        setnewBox(prev => {
           prev = JSON.parse(res)
           return prev
         })
-      }else{
-        setSolbox([
-          ["", "", ""],
-          ["", "", ""],
-          ["", "", ""],
-          ["", "", ""],
-        ])
       }
-    })
-    AsyncStorage.getItem('row1').then((res) => {
-    if(res !== null) {
-      setRow1(prev => {
-        prev = JSON.parse(res)
-        // {"otherData":123}
-        return prev
-      })
-      
-    }else{
-      setRow1(Seter(crntQustion.rows[0]))
-    }
-    })
-    
-    AsyncStorage.getItem('row2').then((res) => {
-      if(res !== null) {
-        setRow2(prev => {
-          prev = JSON.parse(res)
-          // {"otherData":123}
-          return prev
-        })
-      
-      }else{
-        setRow2(Seter(crntQustion.rows[1]))
-      }
-    })
-    AsyncStorage.getItem('row3').then((res) => {
-      if(res !== null) {
-        setRow3(prev => {
-          prev = JSON.parse(res)
-          return prev
-        })
-        
-      }else{
-        setRow3(Seter(crntQustion.rows[2]))
-      }
-    })
+    });
   };
   const Seter = (arr) => {
-    let ar =[]
-    arr.map((block, i) => {
-      let blk=[]
-      block.map((row, i) => {
-        row.cells.map((cell, i) => {
-          cell === true || cell === false ? row.cells[i] = 'emty' : undefined
-        })
-        row.checked = false
-        blk.push(row)
-      })
-      ar.push(blk)
-    })
-    return ar
-  }
-  const [row1, setRow1] = useState([]);
-  const [row2, setRow2] = useState([]);
-  const [row3, setRow3] = useState([]);
-
-  
-  const cellValSeter = (vl, arToSet, i1, i2, i3) => {
-    if (vl == "emty") {
-      return (
-        <View style={{ width: "100%", height: "100%" }}>
-          <Text
-            style={{
-              flex: 1,
-              justifyContent: "center",
-              alignItems: "center",
-              backgroundColor: "transparent",
-            }}
-            onPress={() => clickHandler(arToSet, i1, i2, i3)}
-          ></Text>
-        </View>
-      );
-    }
-    if (vl === "hint") {
-      return (
-        <View
-          style={{
-            width: "100%",
-            backgroundColor: "#777",
-            justifyContent: "center",
-            alignItems: "center",
-            margin: 1,
-          }}
-        >
-          <Entypo name="cross" size={19} color="white" />
-        </View>
-      );
-    }
-    if (vl) {
-      return (
-        <Entypo
-          name="check"
-          size={22}
-          color="#00675b"
-          onPress={() => clickHandler(arToSet, i1, i2, i3)}
-        />
-      );
-    } else {
-      return (
-        <Entypo
-          name="cross"
-          size={22}
-          color="#00675b"
-          onPress={() => clickHandler(arToSet, i1, i2, i3)}
-        />
-      );
-    }
-  };
-  const cellGenerator = (ar, arToSet) => {
-    let nA = [];
-    ar.map((item, i1) => {
-      let arr = [];
-      item.map((it2, i2) => {
-        let arr2 = [];
-        it2.cells.map((it3, i3) => {
-          arr2.push(<El i1={i1} i2={i2} i3={i3} val={it3} arToSet={arToSet} />);
+    let ar = [];
+    arr.map((rows, i) => {
+      let Row = []
+      rows.map((block, i) => {
+        let blk = [];
+        block.map((row, i) => {
+          row.cells.map((cell, i) => {
+            cell === true || cell === false ? (row.cells[i] = "emty") : undefined;
+          });
+          row.checked = false;
+          blk.push(row);
         });
-        arr.push(arr2);
+        Row.push(blk);
       });
-      nA.push(arr);
-    });
-    return nA;
+      ar.push(Row)
+    })
+    return ar;
   };
-  const [row1Cels, setRow1Cels] = useState([]);
-  const [row2Cels, setRow2Cels] = useState([]);
-  const [row3Cels, setRow3Cels] = useState([]);
-  const [solbox, setSolbox] = useState([]);
+  const cellGenerator = (ar) => {
+    let finalArr = [];
+    ar.map((row, i0) => {
+      let nA = [];
+      row.map((item, i1) => {
+        let arr = [];
+        item.map((it2, i2) => {
+          let arr2 = [];
+          it2.cells.map((it3, i3) => {
+            arr2.push(<El i0={i0} i1={i1} i2={i2} i3={i3} val={it3} />);
+          });
+          arr.push(arr2);
+        });
+        nA.push(arr);
+      });
+      finalArr.push(nA);
+    });
+    return finalArr;
+  };
 
-  const head = ["الاسم الثاني", "الاسم الثالث", "اسم الديوان"];
+  const crntStatSeter = (value) => {
+    settingslct();
+    return value;
+  };
+
   const name = ["الاسم الاول", "الاسم الثاني", "الاسم الثالث"];
-  let dewan = crntQustion.dewan;
-  let nam1 = crntQustion.names.nam1;
-  let nam2 = crntQustion.names.nam2;
-  let nam3 = crntQustion.names.nam3;
-
+  const INITIALSTATE = {
+    active: 0,
+    Row: Data[0].rows,
+    Cells: cellGenerator(Data[0].rows),
+    curntstate: true,
+    dewan: Data[0].dewan,
+    nam1: Data[0].names.nam1,
+    nam2: Data[0].names.nam2,
+    nam3: Data[0].names.nam3,
+  };
+  const rowReducer = (state, action) => {
+    switch (action.type) {
+      case "navigating":
+        setnewBox((prev) => {
+          prev = [
+            ["", "", ""],
+            ["", "", ""],
+            ["", "", ""],
+            ["", "", ""],
+          ];
+          return prev;
+        });
+        setWin(false);
+        setModle(false);
+        Data[state.active].rows = Seter(Data[state.active].rows)
+        if (state.active < Data.length - 1) {
+          return {
+            ...state,
+            active: state.active + 1,
+            Row: Data[state.active + 1].rows,
+            Cells: cellGenerator(Data[state.active + 1].rows),
+            dewan: Data[state.active + 1].dewan,
+            nam1: Data[state.active + 1].names.nam1,
+            nam2: Data[state.active + 1].names.nam2,
+            nam3: Data[state.active + 1].names.nam3,
+          };
+        } else {
+          return {
+            ...state,
+            active: 0,
+            Row: Data[0].rows,
+            Cells: cellGenerator(Data[0].rows),
+            curntstate: true,
+            dewan: Data[0].dewan,
+            nam1: Data[0].names.nam1,
+            nam2: Data[0].names.nam2,
+            nam3: Data[0].names.nam3,
+          };
+        }
+      case "editting":
+        return {
+          ...state,
+          Row: editHandler(
+            state.Row,
+            action.payload.i0,
+            action.payload.i1,
+            action.payload.i2,
+            action.payload.i3,
+            state.curntstate,
+            state.active
+          ),
+          Cells: cellGenerator(state.Row),
+        };
+      case "setCrntState":
+        return {
+          ...state,
+          curntstate: crntStatSeter(action.payload),
+        };
+      case "persestActive":
+        return {
+          ...state,
+          active: action.payload,
+          Row: Data[action.payload].rows,
+          Cells: cellGenerator(Data[action.payload].rows),
+          dewan: Data[action.payload].dewan,
+          nam1: Data[action.payload].names.nam1,
+          nam2: Data[action.payload].names.nam2,
+          nam3: Data[action.payload].names.nam3,
+        };
+      case "persestRows":
+        return {
+          ...state,
+          Row: action.payload,
+          Cells: cellGenerator(action.payload),
+        };
+        return {
+          ...state,
+          modle: !state.modle,
+        };
+      default:
+        return state;
+    }
+  };
+  const [state, dispatch] = useReducer(rowReducer, INITIALSTATE);
   useEffect(() => {
     Perssesting()
-  }, [modle])
-  
-  useEffect(() => {
-    if (slect) {
-      slect.unloadAsync()
+  }, []);
+  useEffect(() => {  
+    return () => {
+      if (slectSond) {
+        slectSond.unloadAsync()
+      }
+      if (clickSond) {
+        clickSond.unloadAsync()
+      }
+      if (deletSond) {
+        deletSond.unloadAsync()
+      }
     }
-    if (click) {
-      click.unloadAsync()
-    }
-    
-    setCrntQustion(Data[active])
-    setRow1Cels((prev) => {
-      prev = cellGenerator(row1, 1);
-      return prev;
-    });
-    setRow2Cels((prev) => {
-      prev = cellGenerator(row2, 2);
-      return prev;
-    });
-    setRow3Cels((prev) => {
-      prev = cellGenerator(row3, 3);
-      return prev;
-    });
-  }, [curntstate, active, row1,row2, row3,solbox]);
-
-  
-
+  }, [slectSond, clickSond, deletSond])
 
   return (
     <SafeAreaView style={styles.container}>
       <StatusBar style="auto" />
-      <Table style={{ paddingHorizontal: 5 }}>
-        {/* Table Header ------START----- */}
-        <TableWrapper
-          style={{
-            height: 140,
-            flexDirection: "row",
-          }}
-        >
-          <TableWrapper style={{ width: 100 }}>
-            <Cell data={""} />
-          </TableWrapper>
-          <TableWrapper style={{ flex: 1 }}>
-            {/* First Row */}
-            <TableWrapper style={{ flexDirection: "row-reverse", height: 20 }}>
-              {head.map((item, i) => (
-                <Cell key={i} data={item} textStyle={styles.text} />
-              ))}
-            </TableWrapper>
-            {/* Second Row */}
-            <TableWrapper
-              style={{
-                flexDirection: "row-reverse",
-                justifyContent: "space-between",
-              }}
-            >
-              <TableWrapper style={styles.rotatedWraper}>
-                {nam2.map((item, i) => (
-                  <Cell
-                    key={i}
-                    data={item}
-                    style={{}}
-                    textStyle={styles.headerCell}
-                  />
-                ))}
-              </TableWrapper>
-              <TableWrapper style={styles.rotatedWraper}>
-                {nam3.map((item, i) => (
-                  <Cell key={i} data={item} textStyle={styles.headerCell} />
-                ))}
-              </TableWrapper>
-              <TableWrapper style={styles.rotatedWraper}>
-                {dewan.reverse().map((item, i) => (
-                  <Cell key={i} data={item} textStyle={styles.headerCell} />
-                ))}
-              </TableWrapper>
-            </TableWrapper>
-          </TableWrapper>
-        </TableWrapper>
-        {/* Table Header ------END------ */}
-
-        {/* Table Body ------START-------  */}
-        <TableWrapper>
-          {/* The Frist Row ----START---- */}
-          <TableWrapper style={styles.ro1Wrapper}>
-            <TableWrapper style={{ flexDirection: "row-reverse" }}>
-              <TableWrapper style={{ width: 70 }}>
-                {nam1.map((item, i) => (
-                  <Cell
-                    data={item}
-                    key={i}
-                    textStyle={styles.horcell}
-                    style={{ flex: 1 }}
-                  />
-                ))}
-              </TableWrapper>
-              <TableWrapper style={styles.hor}>
-                <Cell
-                  data={name[0]}
-                  style={{ flex: 1 }}
-                  textStyle={{ fontSize: 10, width: 30, textAlign: "center" }}
-                />
-              </TableWrapper>
-            </TableWrapper>
-            <TableWrapper style={{ flex: 1, flexDirection: "row" }}>
-              {row1Cels.map((item, i) => (
-                <TableWrapper
-                  style={{
-                    flexDirection: "row",
-                    flex: 1,
-                    borderTopWidth: 0.5,
-                    borderLeftWidth: 0.5,
-                    borderBottomWidth: i == row1Cels.length - 1 ? 1 : 0.5,
-                    borderRightWidth: i == row1Cels.length - 1 ? 1 : 0.5,
-                    borderColor: "#00675b",
-                  }}
-                  key={i}
-                >
-                  <Rows
-                    data={item}
-                    flexArr={[1, 1, 1, 1]}
-                    style={{ flex: 1 }}
-                    borderStyle={{ borderWidth: 2, borderColor: "#c8e1ff" }}
-                  />
-                </TableWrapper>
-              ))}
-            </TableWrapper>
-          </TableWrapper>
-          {/* The Frist Row ----END---- */}
-
-          {/* The Second Row ----START---- */}
-          <TableWrapper style={styles.Wrapper}>
-            <TableWrapper style={{ flexDirection: "row-reverse" }}>
-              <TableWrapper style={{ width: 70 }}>
-                {nam2.map((item, i) => (
-                  <Cell
-                    data={item}
-                    key={i}
-                    textStyle={styles.horcell}
-                    style={{ flex: 1 }}
-                  />
-                ))}
-              </TableWrapper>
-              <TableWrapper style={styles.hor}>
-                <Cell
-                  data={name[1]}
-                  style={{ flex: 1 }}
-                  textStyle={{ fontSize: 10, width: 30, textAlign: "center" }}
-                />
-              </TableWrapper>
-            </TableWrapper>
-            {/* Cell --- START --- */}
-            <TableWrapper style={{ flex: 2 / 3, flexDirection: "row" }}>
-              {row2Cels.map((item, i) => (
-                <TableWrapper
-                  style={{
-                    flexDirection: "row",
-                    flex: 1,
-                    borderTopWidth: 0.5,
-                    borderLeftWidth: 0.5,
-                    borderBottomWidth: i == row2Cels.length - 1 ? 1 : 0.5,
-                    borderRightWidth: i == row2Cels.length - 1 ? 1 : 0.5,
-                    borderColor: "#00675b",
-                  }}
-                  key={i}
-                >
-                  <Rows
-                    data={item}
-                    flexArr={[1, 1, 1, 1]}
-                    textStyle={{ alignItems: "center", textAlign: "center" }}
-                    style={{
-                      display: "flex",
-                      flex: 1,
-                      justifyContent: "center",
-                      alignContent: "center",
-                      alignItem: "center",
-                    }}
-                    borderStyle={{ borderWidth: 2, borderColor: "#c8e1ff" }}
-                  />
-                </TableWrapper>
-              ))}
-            </TableWrapper>
-            {/* Cell --- START --- */}
-          </TableWrapper>
-          {/* The Second Row ----END---- */}
-
-          {/* The Third Row ----START---- */}
-          <TableWrapper style={styles.Wrapper}>
-            <TableWrapper style={{ flexDirection: "row-reverse" }}>
-              <TableWrapper style={{ width: 70 }}>
-                {nam3.map((item, i) => (
-                  <Cell
-                    data={item}
-                    key={i}
-                    textStyle={styles.horcell}
-                    style={{ flex: 1 }}
-                  />
-                ))}
-              </TableWrapper>
-              <TableWrapper style={styles.hor}>
-                <Cell
-                  data={name[2]}
-                  style={{ flex: 1 }}
-                  textStyle={{ fontSize: 10, width: 30, textAlign: "center" }}
-                />
-              </TableWrapper>
-            </TableWrapper>
-            {/* Cells ---START--- */}
-            <TableWrapper style={{ flex: 1 / 3 }}>
-              {row3Cels.map((item, i) => (
-                <TableWrapper
-                  style={{
-                    flexDirection: "row",
-                    flex: 1,
-                    borderTopWidth: 0.5,
-                    borderLeftWidth: 0.5,
-                    borderBottomWidth: i == row3Cels.length - 1 ? 1 : 0.5,
-                    borderRightWidth: i == row3Cels.length - 1 ? 1 : 0.5,
-                    borderColor: "#00675b",
-                  }}
-                  key={i}
-                >
-                  <Rows
-                    data={item}
-                    flexArr={[1, 1, 1, 1]}
-                    style={{ flex: 1 }}
-                    borderStyle={{ borderWidth: 2, borderColor: "#c8e1ff" }}
-                  />
-                </TableWrapper>
-              ))}
-            </TableWrapper>
-            {/* Cells ---END--- */}
-          </TableWrapper>
-          {/* The Third Row ----END---- */}
-        </TableWrapper>
-        {/* Table Body ------END-------  */}
-      </Table>
+      <TheHeader Data={[state.dewan, state.nam3, state.nam2]} />
+      <RowBuilder name={name[0]} names={state.nam1} blocks={state.Cells[0]} />
+      <RowBuilder name={name[1]} names={state.nam2} blocks={state.Cells[1]} />
+      <RowBuilder name={name[2]} names={state.nam3} blocks={state.Cells[2]} />
 
       <View style={styles.selectBox}>
         <TouchableOpacity
@@ -604,21 +455,21 @@ export default function Game() {
             alignItems: "center",
             justifyContent: "center",
           }}
-          onPress={() => {
-            setCurntstate(true)
-            settingslct()
-          }}
+          onPress={() => dispatch({ type: "setCrntState", payload: true })}
         >
           <View
             style={[
               styles.bullets,
-              { backgroundColor: curntstate === true ? "red" : "transparent" },
+              {
+                backgroundColor:
+                  state.curntstate === true ? "red" : "transparent",
+              },
             ]}
           ></View>
           <View
             style={[
               styles.box,
-              { opacity: curntstate === true ? 1 : 0.5, marginLeft: 6 },
+              { opacity: state.curntstate === true ? 1 : 0.5, marginLeft: 6 },
             ]}
           >
             <Entypo name="check" size={30} color="#c2e7ff" />
@@ -632,23 +483,21 @@ export default function Game() {
             alignItems: "center",
             justifyContent: "center",
           }}
-          onPress={() =>{
-              setCurntstate(false)
-              settingslct()
-            }}
+          onPress={() => dispatch({ type: "setCrntState", payload: false })}
         >
           <View
             style={[
               styles.bullets,
               {
-                backgroundColor: curntstate === false ? "red" : "transparent",
+                backgroundColor:
+                  state.curntstate === false ? "red" : "transparent",
               },
             ]}
           ></View>
           <View
             style={[
               styles.box,
-              { opacity: curntstate === false ? 1 : 0.5, marginLeft: 6 },
+              { opacity: state.curntstate === false ? 1 : 0.5, marginLeft: 6 },
             ]}
           >
             <Entypo name="cross" size={30} color="#c2e7ff" />
@@ -662,17 +511,14 @@ export default function Game() {
             alignItems: "center",
             justifyContent: "center",
           }}
-          onPress={() => {
-            setCurntstate("delete")
-            settingslct()
-          }}
+          onPress={() => dispatch({ type: "setCrntState", payload: "delete" })}
         >
           <View
             style={[
               styles.bullets,
               {
                 backgroundColor:
-                  curntstate === "delete" ? "red" : "transparent",
+                  state.curntstate === "delete" ? "red" : "transparent",
               },
             ]}
           ></View>
@@ -680,7 +526,7 @@ export default function Game() {
             style={[
               styles.box,
               {
-                opacity: curntstate === "delete" ? 1 : 0.5,
+                opacity: state.curntstate === "delete" ? 1 : 0.5,
                 marginLeft: 6,
                 padding: 2,
               },
@@ -693,21 +539,20 @@ export default function Game() {
 
       <SolTable
         tableHead={["الديوان", ...name]}
-        tableData={solbox}
-        tableTitle={dewan.reverse()}
+        tableData={newBox}
+        tableTitle={state.dewan}
       />
-      {modle && <Modle
-        stats={win}
-        active={active}
-        setActive={setActive}
-        setModle={setModle}
-        length={Data.length}
-      />}
 
-      <TouchableOpacity
-        style={styles.button}
-        onPress={() => submtHandler()}
-      >
+      {modle && (
+        <Modle
+          stats={win}
+          dispatch={dispatch}
+          setModle={setModle}
+          active={state.active}
+        />
+      )}
+
+      <TouchableOpacity style={styles.button} onPress={() => submtHandler()}>
         <Text style={{ color: "#c2e7ff" }}>موافق</Text>
       </TouchableOpacity>
     </SafeAreaView>
@@ -721,74 +566,6 @@ const styles = StyleSheet.create({
     backgroundColor: "#f8fafd",
     direction: "rtl",
     position: "relative",
-  },
-  rotatedWraper: {
-    transform: [{ rotate: "-90deg" }],
-    flex: 1,
-  },
-  text: {
-    borderWidth: 1,
-    textAlign: "center",
-    fontSize: 12,
-    borderColor: "#00675b",
-    borderLeftColor: "#00675b",
-    borderBottomColor: "transparent",
-  },
-  cell: {
-    borderWidth: 1,
-    textAlign: "center",
-    fontSize: 12,
-    borderColor: "#00675b",
-    borderTopColor: "#00675b",
-  },
-  headerCell: {
-    borderWidth: 1,
-    textAlign: "center",
-    fontSize: 12,
-    borderColor: "#00675b",
-    borderRightColor: "transparent",
-    // borderBottomColor: "transparent",
-    // borderTopColor: "transparent",
-    borderLeftColor: "transparent",
-    width: 120
-  },
-  chexBoxcel: {
-    borderWidth: 1,
-    fontSize: 12,
-    borderColor: "#00675b",
-    borderTopColor: "#00675b",
-    flex: 1,
-  },
-  chexBox: {
-    borderWidth: 1,
-    flex: 1,
-    borderColor: "#00675b",
-    justifyContent: "center",
-    alignItems: "center",
-  },
-  horcell: {
-    borderWidth: 1,
-    textAlign: "center",
-    fontSize: 11,
-    borderColor: "#00675b",
-    borderTopColor: "#00675b",
-    flex: 1,
-  },
-  ro1Wrapper: {
-    flexDirection: "row",
-    height: 100,
-    borderColor: "#00675b",
-  },
-  Wrapper: {
-    flexDirection: "row",
-    height: 100,
-    borderColor: "#00675b",
-  },
-  hor: {
-    textAlign: "center",
-    borderWidth: 1,
-    borderColor: "#00675b",
-    width: 30,
   },
   selectBox: {
     margin: 10,

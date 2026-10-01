@@ -1,5 +1,5 @@
 import { View, Text, StyleSheet, TouchableOpacity } from "react-native";
-import React, { useEffect } from "react";
+import React, { useEffect,useState } from "react";
 import { AntDesign } from "@expo/vector-icons";
 import { Entypo } from "@expo/vector-icons";
 import { MaterialIcons } from "@expo/vector-icons";
@@ -7,27 +7,18 @@ import { Audio } from 'expo-av';
 import { FontAwesome } from "@expo/vector-icons";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 
-const Modle = ({ stats, setActive, active,setModle, length }) => {
+const Modle = ({ stats, dispatch, setModle, active }) => {
   
-  const nextHandler = () => {
-    if(active < length -1){
-      AsyncStorage.setItem('active', JSON.stringify(active + 1))
-      setModle(false)
-    }else{
-      setModle(false)
-      AsyncStorage.setItem('active', JSON.stringify(0))
-    }
-    AsyncStorage.removeItem('row1')
-    AsyncStorage.removeItem('row2')
-    AsyncStorage.removeItem('row3')
-    AsyncStorage.removeItem('box')
-  }
+  const [winSond, setWinSond] = useState()
+  const [losSond, setLosSond] = useState()
   const win = async () => {
     const {sound} = await Audio.Sound.createAsync(require('../assets/Sounds/goodresult.mp3'))
+    setWinSond(sound)
     await sound.playAsync()
   }
   const Lose = async () => {
     const {sound} = await Audio.Sound.createAsync(require('../assets/Sounds/wrong-buzzer.mp3'))
+    setLosSond(sound)
     await sound.playAsync()
   }
 
@@ -38,6 +29,16 @@ const Modle = ({ stats, setActive, active,setModle, length }) => {
       Lose()
     }
   }, [])
+  useEffect(() => {
+    return () => {
+      if (winSond) {
+        winSond.unloadAsync()
+      }
+      if (losSond) {
+        losSond.unloadAsync()
+      }
+    }
+  }, [winSond, losSond])
   
   return (
     <View style={styles.overLay}>
@@ -48,12 +49,17 @@ const Modle = ({ stats, setActive, active,setModle, length }) => {
           <View style={styles.actions}>
             <TouchableOpacity
               style={{ alignItems: "center", flexDirection: "row" }}
-              onPress={() => {nextHandler()}}
+              onPress={() => {
+                dispatch({type: "navigating"})
+                AsyncStorage.setItem("active", JSON.stringify(active + 1))
+                AsyncStorage.removeItem("rows")
+                AsyncStorage.removeItem("solBox")
+              }}
             >
               <MaterialIcons name="navigate-next" size={24} color="#ffff" />
               <Text style={{ color: "#ffff", fontSize: 16 }}>التالي</Text>
             </TouchableOpacity>
-            <TouchableOpacity onPress={() => {setActive(active),setModle(false)}}>
+            <TouchableOpacity onPress={() => {setModle(false)}}>
               <FontAwesome name="rotate-right" size={24} color="#ffff" />
             </TouchableOpacity>
           </View>
